@@ -10,17 +10,6 @@ const filterObj = (obj, ...allowedFields)=>{
 
 }
 
-  // exports.getAllUsers =async (req, res) => {
-  //  const users = await User.find();
-  //  res.status(200).json({
-  //   status: 'success',
-  //   results: users.length,
-  //   data:{
-  //     users
-  //   }
-  //  })
-  // }
-  
 
   exports.getMe = (req, res, next)=>{
     req.params.id = req.user.id;
@@ -58,12 +47,7 @@ const filterObj = (obj, ...allowedFields)=>{
     })
   }
 
-  // exports.getUser = (req, res) => {
-  //   res.status(500).json({
-  //     status:'error',
-  //     message: 'Not Defined route'
-  //   })
-  // }
+
   
   exports.createUser = (req, res) => {
     res.status(500).json({
@@ -78,6 +62,12 @@ const filterObj = (obj, ...allowedFields)=>{
   //     message: 'Not Defined route'
   //   })
   // }
+
+// In your authController.js or similar file
+
+
+
+
   exports.getUser = factory.getOne(User);
   exports.deleteUser = factory.deleteOne(User);
   exports.updateUser = factory.updateOne(User);

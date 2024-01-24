@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Employee Management System</title>
+  <style>
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #3498db;
+      background-image: linear-gradient(to bottom, #3498db, #2980b9);
+      color: #fff;
+    }
+
+    .auth-container {
+      text-align: center;
+      background-color: rgba(255, 255, 255, 0.1);
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      font-size: 2em;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      box-sizing: border-box;
+      border: none;
+      border-radius: 5px;
+      background-color: rgba(255, 255, 255, 0.8);
+      color: #333;
+    }
+
+    button {
+      width: 100%;
+      font-size: 1em;
+      padding: 10px;
+      margin: 10px 0;
+      cursor: pointer;
+      border: none;
+      border-radius: 5px;
+      transition: background-color 0.3s ease;
+    }
+
+    #loginBtn {
+      background-color: #2ecc40;
+      color: #fff;
+    }
+
+    #signupBtn {
+      background-color: #3498db;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+  <div class="auth-container">
+    <h1>Login</h1>
+    <form id="loginForm" onsubmit="login(event)">
+      <input type="text" id="email" placeholder="E-mail" required>
+      <input type="password" id="password" placeholder="Password" required>
+      <button id="loginBtn" type="submit">Login</button>
+    </form>
+
+    <h1>Sign Up</h1>
+    <form id="signupForm" onsubmit="signup(event)">
+        <input type="text" placeholder="Name" required>
+        <input type="text" placeholder="E-Mail" required>
+        <input type="password" placeholder="Password" required>
+        <input type="password" placeholder="Confirm Password" required>
+        <button id="signupBtn" type="submit">Sign Up</button>
+    </form>
+  </div>
+
+  <script>
+    async function login(event) {
+      event.preventDefault();
+  
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+  
+      try {
+        const response = await fetch('http://localhost:5000/api/v1/users/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email, password }),
+        });
+  
+        const data = await response.json();
+  
+        if (response.ok) {
+          // Redirect to the stopwatch page on successful login
+          window.location.href = 'http://localhost:5000/stopwatch.html';
+        } else {
+          alert(data.message); // Display error message on unsuccessful login
+        }
+      } catch (error) {
+        console.error('Error during login:', error);
+      }
+    }
+  
+  </script>
+</body>
+</html>

@@ -1,7 +1,8 @@
 const {promisify} = require('util');
 // eslint-disable-next-line import/no-extraneous-dependencies
-const crypto = require('crypto');
+
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
 
 const User = require("../models/userModel");
 const sendEmail = require('../utils/email');
@@ -28,237 +29,172 @@ const createSendToken = (user, statusCode, res) => {
 }
 
 
-exports.signup = async(req, res, next) => {
-    const newUser = await User.create({
-        name: req.body.name,
-        email: req.body.email,
-        password: req.body.password,
-        passwordConfirm: req.body.passwordConfirm
-    });
+// exports.signup = async(req, res, next) => {
+//     const newUser = await User.create({
+//         name: req.body.name,
+//         email: req.body.email,
+//         password: req.body.password,
+//         passwordConfirm: req.body.passwordConfirm
+//     });
 
     
 
-    const token = signToken(newUser._id);
+//     const token = signToken(newUser._id);
     
-    try{
-        res.status(201).json({
-            status: 'success',
-            token,
-            data:{
-                user: newUser
-            }
-        })
+//     try{
+//         res.status(201).json({
+//             status: 'success',
+//             token,
+//             data:{
+//                 user: newUser
+//             }
+//         })
 
-    }catch(err){
-        res.status(404).json({
-        status: 'fail',
-        message: err
-        })
+//     }catch(err){
+//         res.status(404).json({
+//         status: 'fail',
+//         message: err
+//         })
     
-    }
-}
+//     }
+// }
+
+exports.signup = async (req, res, next) => {
+  const { name, email, password, passwordConfirm } = req.body;
+
+  if (!passwordConfirm) {
+      return res.status(400).json({
+          status: 'fail',
+          message: 'Please provide a password confirmation',
+      });
+  }
+
+  try {
+      const newUser = await User.create({
+          name: name,
+          email: email,
+          password: password,
+          passwordConfirm: passwordConfirm,
+      });
+
+      const token = signToken(newUser._id);
+
+      res.status(201).json({
+          status: 'success',
+          token,
+          data: {
+              user: newUser,
+          },
+      });
+  } catch (err) {
+      res.status(404).json({
+          status: 'fail',
+          message: err,
+      });
+  }
+  
+};
+
 
 exports.login = async (req, res, next) => {
     const { email, password } = req.body;
-    //check if email and password exists
-    if (!email || !password) {
-        const error = new Error('Please provide email and password');
-        error.status = 400;
-        return next(error);
+
+    try {
+        // Check if user exists and password is correct
+        const user = await User.findOne({ email }).select('+password');
+        if (user && await user.correctPassword(password, user.password)) {
+            user.active = true;
+            user.loginTime = new Date();
+            await user.save();
+      
+            // Set res.locals.user for subsequent middleware/routes
+            res.locals.user = user;
+      
+            // Continue with creating and sending token
+            createSendToken(user, 200, res);
+          } else {
+            // Handle incorrect credentials
+            res.status(401).json({
+              status: 'fail',
+              message: 'Authentication failed',
+            });
+          }
+    } catch (err) {
+        res.status(500).json({
+            status: 'error',
+            message: err.message,
+        });
     }
+   
+};
 
 
-    //Check if user exists and password is correct
-    const user = await User.findOne({ email}).select('+password');
-    
-
-    if(!user || !(await user.correctPassword(password, user.password))){
-        const error = new Error('Incorrect email or password');
-        error.status = 401;
-        return next(error);
-    }
-    
-    //If everything ok, send token to client
-
-    const token = signToken(user._id);
-
-    res.status(200).json({
-        status: 'success',
-        token
-    })
-    console.log("the token is   ", token)
-    
-}
-
-
-exports.protect = (async (req, res, next) => {
-
-    //Get token and check if its there
-    let token;
-    if(
-        req.headers.authorization && 
-        req.headers.authorization.startsWith('Bearer')
-    ){
-        token = req.headers.authorization.split(' ')[1];
-    }
-    
-    if(!token){
-        const error = new Error('You are not logged in! please log in to acess...');
-        error.status = 401;
-        return next(error);
-    }
-
-
-    //Validate token
-    let decoded;
-    try{
-        decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET)
-        console.log(decoded)
-    }catch(err){
-        res.status(404).json({
-            status: 'fail',
-            message: "Invalid token/Password"
-        })
-    }
-    
-    //check if user exist
-    const freshUser = await User.findById(decoded.id);
-    if(!freshUser){
-        const error = new Error('User not exist');
-        error.status = 401;
-        return next(error);
-    }
-    //check if user changed passsword after token issueed
-
-    if(freshUser.changedPasswordAfter(decoded.iat)){
-        const error = new Error('password changed recently');
-        error.status = 401;
-        return next(error);
-    }
-
-    req.user = freshUser;
-    next();
-})
-
-
-
-// eslint-disable-next-line arrow-body-style
-exports.restrictTo = (...roles) => {
-    return (req, res, next) => {
-        if (!roles.includes(req.user.role)) {
-            const error = new Error('You do not have permission for this action');
-            error.status = 403; 
-            return next(error);
-        }
-        next(); 
-    };
-}
-
-exports.forgotPassword = async (req, res, next) => {
-    //get user based on posted email
-    const user = await User.findOne({email: req.body.email});
-    if(!user){
-        const error = new Error('No user with this email');
-        error.status = 404;    
-        console.log("No user with this email")
-        return next(error); 
-    }
-
-    //generate random reset token
-    const resetToken = user.createPasswordResetToken();
-    await user.save({validaBeforeSave: false});
-
-
-    //Send that to user email
-    const resetURL = `${req.protocol}://:${req.get(
-        'host'
-    )}/api/v1/users/resetPassword/${resetToken}`;
-
-    const message = `Forgot password? subit patch with new password and confirmPassword to: ${resetURL}`;
-    
-
-    try{
-        await sendEmail({
-            email: user.email,
-            subject: 'Your password reset token (valid for 10 min)',
-            message
-        })
+exports.finishWork = async (req, res, next) => {
+    console.log('Request Body:', req.body);
+    const { email, workHours } = req.body;
+    try {
+      
+      console.log('Received email:', email);
+      
+  
+      // Find the user by email
+      const user = await User.findOne({ email });
+      if(user){
+        console.log(email)
+      }
+      if (!user) {
+        console.log("user.email not recieved");
+        return res.status(404).json({
+          status: 'fail',
+          message: 'User not found',
+          
+        });
         
-        res.status(200).json({
-            status: 'success',
-            message: 'token sent to email!'
-        })
-    }catch(err){
-        user.PasswordResetToken = undefined;
-        user.passwordExpires = undefined;
-        await user.save({validaBeforeSave: false});
-
-        const error = new Error('Thwew was an error, try again');
-        error.status = 500;    
-        return next(error); 
-    }
-    
-
-}
-
-exports.resetPassword = async (req, res, next) => {
-
-    //get user based on token
-    const hashedToken = crypto
-        .createHash('sha256')
-        .update(req.params.token)
-        .digest('hex')
-
-    const user = await User.findOne({
-        PasswordResetToken: hashedToken,
-        passwordResetExpires: { $gt: Date.now() }
-    });
-
-    //if token not expired ans there is user, set new password
-    if(!user){
-        const error = new Error('Token invalid/expired');
-        error.status = 400;
-        return next(error); 
-    }
-
-    user.password = req.body.password;
-    user.passwordConfirm = req.body.passwordConfirm;
-    user.PasswordResetToken = undefined;
-    user.passwordExpires = undefined;
-    await user.save();
-
-
-    //update changedpassword at 
-
-
-    //log in with jwt
-    const token = signToken(user._id);
-
-    res.status(200).json({
+      }
+      if(user)console.log(user.email);
+      // Update the user document with finish time and work duration
+      
+      user.workHours = workHours;
+      user.finishTime=new Date();
+      await user.save();
+  
+      res.status(200).json({
         status: 'success',
-        token
-    })
-
-}
-
-
-exports.updatePassword = async (req, res, next) => {
-    //Get user
-    const user = await User.findById(req.user.id).select('+password');
-
-    //Check posted password
-    if(!(await user.correctPassword(req.body.passwordCurrent, user.password))){
-        const error = new Error('current password wrong');
-        error.status = 401;
-        return next(error); 
+        message: 'Work time saved successfully',
+      });
+    } catch (error) {
+        console.error('Error saving work time:', error);
+        res.status(500).json({
+            status: 'error',
+            message: 'Internal server error',
+        });
     }
+ 
+  };
+  
 
-    //If so update
-    user.password = req.body.password;
-    user.passwordConfirm = req.body.passwordConfirm;
-    await user.save();
 
-    //log user in, send jwt
-    createSendToken(user, 200, res);
-
-}
+exports.logout = async (req, res) => {
+    try {
+      const user = req.user;
+  
+      // Record logout time
+      user.logoutTime = new Date();
+      user.active=false;
+      await user.save();
+  
+      res.clearCookie('jwt');
+  
+      res.status(200).json({
+        status: 'success',
+        message: 'User logged out successfully',
+      });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({
+        status: 'error',
+        message: 'Internal server error',
+      });
+    }
+  };
+  

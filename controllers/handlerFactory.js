@@ -64,26 +64,35 @@ exports.updateOne = Model => async(req, res, next) => {
   }
   
 
-  exports.getOne = (model, popOptions) => async(req, res, next) => {
-    let query = model.findById(req.params.id);
-    if(popOptions) query = query.populate(popOptions);
-    
-    const doc = await query;
-    if(!doc){
-        const error = new Error('Document not found');
-        error.statusCode = 404; 
-        return next(error);
-    }
-    res.status(201).json({
-        status: 'success',
-        data:{
-          data: doc
-        }
-    });
+  exports.getOne = (model, popOptions) => async (req, res, next) => {
+    try {
+      let query = model.findById(req.params.id);
+      if (popOptions) query = query.populate(popOptions);
   
-    
-    
-  }
+      const doc = await query;
+      if (!doc) {
+        return res.status(404).json({
+          status: 'fail',
+          message: 'Document not found',
+        });
+      }
+  
+      res.status(200).json({
+        status: 'success',
+        data: {
+          data: doc,
+        },
+      });
+    } catch (error) {
+      // Handle other errors (e.g., invalid ID format, database connection issues)
+      console.error('Error in getOne handler:', error);
+      res.status(500).json({
+        status: 'error',
+        message: 'Internal server error',
+      });
+    }
+  };
+  
   
 
 

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Employee Timer</title>
+  <style>
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #3498db;
+      background-image: linear-gradient(to bottom, #3498db, #2980b9);
+      color: #fff;
+    }
+
+    .stopwatch {
+      text-align: center;
+      background-color: rgba(255, 255, 255, 0.1);
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      font-size: 3em;
+    }
+
+    button {
+      font-size: 1em;
+      padding: 10px 20px;
+      margin: 10px;
+      cursor: pointer;
+      border: none;
+      border-radius: 5px;
+      transition: background-color 0.3s ease;
+    }
+
+    #startStopBtn {
+      background-color: #2ecc40;
+      color: #fff;
+    }
+
+    #finishWorkBtn {
+      background-color: #e74c3c;
+      color: #fff;
+    }
+
+    #resetBtn, #logoutBtn {
+      background-color: #3498db;
+      color: #fff;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+  </style>
+</head>
+<body>
+  <div class="stopwatch">
+    <h1 id="display">00:00:00</h1>
+    <button id="startStopBtn" onclick="startStopwatch()">Start</button>
+    <button id="finishWorkBtn" onclick="finishWork()">Finish Work</button>
+    <button id="resetBtn" onclick="resetStopwatch()" disabled>Reset</button>
+    <button id="logoutBtn" onclick="logout()">Logout</button>
+  </div>
+
+  <script>
+    let isRunning = false;
+    let isFinished = false;
+    let time = 0;
+    let interval;
+  
+    function startStopwatch() {
+      if (!isFinished) {
+        if (isRunning) {
+          clearInterval(interval);
+        } else {
+          interval = setInterval(updateTime, 1000);
+        }
+        isRunning = !isRunning;
+        document.getElementById('startStopBtn').innerText = isRunning ? 'Stop' : 'Start';
+        document.getElementById('resetBtn').disabled = isRunning || isFinished;
+      }
+    }
+  
+    function finishWork() {
+      clearInterval(interval);
+      isFinished = true;
+      isRunning = false;
+      document.getElementById('startStopBtn').innerText = 'Start';
+      document.getElementById('resetBtn').disabled = false;
+    }
+  
+    function resetStopwatch() {
+      clearInterval(interval);
+      time = 0;
+      isRunning = false;
+      isFinished = false;
+      document.getElementById('startStopBtn').innerText = 'Start';
+      document.getElementById('resetBtn').disabled = true;
+      updateDisplay();
+    }
+  
+    function updateTime() {
+      time++;
+      updateDisplay();
+    }
+  
+    function updateDisplay() {
+      const hours = Math.floor(time / 3600);
+      const minutes = Math.floor((time % 3600) / 60);
+      const seconds = time % 60;
+  
+      const formattedTime = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  
+      document.getElementById('display').innerText = formattedTime;
+    }
+  
+    function logout() {
+      alert('Logging out...');
+      // Add your logout logic here
+    }
+  
+    // Initial display update
+    updateDisplay();
+  </script>
+  
+  
+</body>
+</html>
