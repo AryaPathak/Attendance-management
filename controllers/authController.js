@@ -70,12 +70,18 @@ exports.signup = async (req, res, next) => {
   }
 
   try {
-      const newUser = await User.create({
-          name: name,
-          email: email,
-          password: password,
-          passwordConfirm: passwordConfirm,
-      });
+    const newUser = await User.create({
+        name: name,
+        email: email,
+        password: password,
+        passwordConfirm: passwordConfirm,
+        
+        workHistory: [{
+            loginTime: new Date(),
+            workHours: '0 hours, 0 minutes, 0 seconds',
+            finishTime: new Date(),
+        }],
+    });
 
       const token = signToken(newUser._id);
 
@@ -156,6 +162,12 @@ exports.finishWork = async (req, res, next) => {
       
       user.workHours = workHours;
       user.finishTime=new Date();
+      await user.save();
+
+      user.workHistory.push({
+        workHours: workHours,
+        finishTime: new Date(),
+      });
       await user.save();
   
       res.status(200).json({

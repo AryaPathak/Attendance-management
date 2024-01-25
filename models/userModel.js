@@ -55,7 +55,23 @@ const userSchema = new mongoose.Schema({
     finishTime:{
         type: Date,
         default: null,
-    }
+    },
+    workHistory: [
+        {
+            loginTime: {
+                type: Date,
+                default: Date.now(),
+            },
+            workHours: {
+                type: String,
+                default: '0 hours, 0 minutes, 0 seconds',
+            },
+            finishTime: {
+                type: Date,
+                default: Date.now(),
+            }
+        }
+    ],
 });
 
 // Middleware to update logout time before saving
