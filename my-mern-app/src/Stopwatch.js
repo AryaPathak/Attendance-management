@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 
+import './Stopwatch.css';
 
 const Stopwatch = () => {
   // eslint-disable-next-line no-unused-vars
@@ -126,44 +127,25 @@ const Stopwatch = () => {
   };
 
   return (
-    <div style={styles.stopwatch}>
-      <h1 style={styles.display}>{formattedTime()}</h1>
-      <button style={styles.button} onClick={startStopwatch}>
-        {isRunning ? 'Stop' : 'Start'}
+    <div className={`stopwatch ${isRunning ? 'running' : ''}`}>
+      <h1 className="display">{formattedTime()}</h1>
+      <button className="primary-button" onClick={startStopwatch}>
+        {isRunning ? 'Pause' : 'Start'}
       </button>
-      <button style={styles.button} onClick={finishWork}>
-        Finish Work
+      <button className="secondary-button" onClick={finishWork}>
+        🚀 Finish Work
       </button>
-      <button style={styles.button} onClick={logOut}>
-        Log Out
+      <button className="secondary-button" onClick={logOut}>
+        🚪 Log Out
       </button>
-      <button style={styles.button} onClick={resetStopwatch} disabled={isRunning || isFinished}>
-        Reset
+      <button
+        className={isRunning || isFinished ? 'disabled-button' : 'secondary-button'}
+        onClick={resetStopwatch}
+        disabled={isRunning || isFinished}
+      >
+        🔄 Reset
       </button>
     </div>
   );
 };
-
-const styles = {
-  stopwatch: {
-    textAlign: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    padding: '20px',
-    borderRadius: '10px',
-    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
-  },
-  display: {
-    fontSize: '3em',
-  },
-  button: {
-    fontSize: '1em',
-    padding: '10px 20px',
-    margin: '10px',
-    cursor: 'pointer',
-    border: 'none',
-    borderRadius: '5px',
-    transition: 'background-color 0.3s ease',
-  },
-};
-
 export default Stopwatch;

@@ -83,16 +83,49 @@ const Login = () => {
     <div className="auth-container">
       <h1>{isLogin ? 'Login' : 'Sign Up'}</h1>
       <form onSubmit={isLogin ? handleLogin : handleSignUp}>
-        {!isLogin && <input type="text" placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} required />}
-        <input type="text" placeholder="E-mail" value={email} onChange={(e) => setEmail(e.target.value)} required />
-        <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-        {!isLogin && <input type="password" placeholder="Confirm Password" value={passwordConfirm} onChange={(e) => setConfirmPassword(e.target.value)} required />}
-        <button type="submit">{isLogin ? 'Login' : 'Sign Up'}</button>
+        {!isLogin && (
+          <input
+            type="text"
+            placeholder="Name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+          />
+        )}
+        <input
+          type="text"
+          placeholder="E-mail"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+        {!isLogin && (
+          <input
+            type="password"
+            placeholder="Confirm Password"
+            value={passwordConfirm}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            required
+          />
+        )}
+        <button type="submit" className={isLogin ? 'login-btn' : 'signup-btn'}>
+          {isLogin ? 'Login' : 'Sign Up'}
+        </button>
       </form>
 
-      <p onClick={toggleForm}>{isLogin ? 'Don\'t have an account? Sign Up' : 'Already have an account? Login'}</p>
+      <p onClick={toggleForm}>
+        {isLogin ? "Don't have an account? Sign Up" : 'Already have an account? Login'}
+      </p>
     </div>
   );
 };
+
 
 export default Login;
