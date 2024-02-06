@@ -121,7 +121,7 @@ const Login = () => {
       </form>
 
       <p onClick={toggleForm}>
-        {isLogin ? "Don't have an account? Sign Up" : 'Already have an account? Login'}
+        {isLogin ? "New Employee ? Sign Up" : 'Already registered ? Login'}
       </p>
     </div>
   );
